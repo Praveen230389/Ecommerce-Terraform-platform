@@ -108,9 +108,6 @@ Name = "eks-node-group"
 ################################
 APPLICATION LOAD BALANCER
 ################################
-################################
-# APPLICATION LOAD BALANCER
-################################
 resource "aws_lb" "main" {
   name               = "ecommerce-alb"
   internal           = false
