@@ -12,7 +12,9 @@ resource "aws_instance" "jenkins" {
   ]
 
   iam_instance_profile = aws_iam_instance_profile.main.name
-  user_data            = file("scripts/jenkins.sh")
+  
+  # FIXED: Added '../' to step out of the terraform directory and look inside scripts folder
+  user_data            = file("../scripts/jenkins.sh")
 
   tags = {
     Name = "jenkins-server"
@@ -32,7 +34,8 @@ resource "aws_instance" "devsecops" {
     aws_security_group.devsecops_sg.id
   ]
 
-  user_data = file("scripts/devsecops.sh")
+  # FIXED: Added '../' to correctly map relative path
+  user_data = file("../scripts/devsecops.sh")
 
   tags = {
     Name = "devsecops-server"
@@ -52,7 +55,8 @@ resource "aws_instance" "monitoring" {
     aws_security_group.monitoring_sg.id
   ]
 
-  user_data = file("scripts/monitoring.sh")
+  # FIXED: Added '../' to correctly map relative path
+  user_data = file("../scripts/monitoring.sh")
 
   tags = {
     Name = "monitoring-server"
