@@ -31,38 +31,6 @@ Name = "private-route-table"
 }
 }
 ################################
-PRIVATE ROUTE ASSOCIATIONS
-################################
-resource "aws_route_table_association" "private1" {
-subnet_id = aws_subnet.private1.id
-route_table_id = aws_route_table.private.id
-}
-resource "aws_route_table_association" "private2" {
-subnet_id = aws_subnet.private2.id
-route_table_id = aws_route_table.private.id
-}
-################################
-JENKINS EC2
-################################
-resource "aws_instance" "jenkins" {
-ami = "ami-0f58b397bc5c1f2e8"
-instance_type = "t3.medium"
-subnet_id = aws_subnet.public1.id
-vpc_security_group_ids = [aws_security_group.main.id]
-user_data = <<-EOF
-#!/bin/bash
-         apt update -y
-          apt install docker.io -y
-
-          systemctl start docker
-          systemctl enable docker
-          EOF
-
-tags = {
-Name = "jenkins-server"
-}
-}
-################################
 EKS IAM ROLE
 ################################
 resource "aws_iam_role" "eks_role" {
