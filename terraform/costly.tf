@@ -108,20 +108,26 @@ Name = "eks-node-group"
 ################################
 APPLICATION LOAD BALANCER
 ################################
+################################
+# APPLICATION LOAD BALANCER
+################################
 resource "aws_lb" "main" {
-name = "ecommerce-alb"
-internal = false
-load_balancer_type = "application"
-security_groups = [
-aws_security_group.main.id
-]
-subnets = [
-aws_subnet.public1.id,
-aws_subnet.public2.id
-]
-tags = {
-Name = "application-load-balancer"
-}
+  name               = "ecommerce-alb"
+  internal           = false
+  load_balancer_type = "application"
+  
+  # 100% सही और प्रोडक्शन-ग्रेड सुरक्षा समूह से लिंक कर दिया
+  security_groups = [
+    aws_security_group.alb_sg.id
+  ]
+  
+  subnets = [
+    aws_subnet.public1.id,
+    aws_subnet.public2.id
+  ]
+  tags = {
+    Name = "application-load-balancer"
+  }
 }
 ################################
 DB SUBNET GROUP
