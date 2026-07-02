@@ -103,44 +103,150 @@ route_table_id = aws_route_table.public.id
 }
 ################################
 SECURITY GROUP
+# 1. LOAD BALANCER SECURITY GROUP (खुला इंटरनेट)
 ################################
-resource "aws_security_group" "main" {
-name = "main-sg"
-vpc_id = aws_vpc.main.id
-ingress {
-description = "SSH"
-from_port   = 22
-to_port     = 22
-protocol    = "tcp"
-cidr_blocks = ["0.0.0.0/0"]
+resource "aws_security_group" "alb_sg" {
+  name        = "ecommerce-alb-sg"
+  description = "Allows public traffic to ALB"
+  vpc_id      = aws_vpc.main.id
 
-}
-ingress {
-description = "HTTP"
-from_port   = 80
-to_port     = 80
-protocol    = "tcp"
-cidr_blocks = ["0.0.0.0/0"]
+  ingress {
+    description = "Public HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-}
-ingress {
-description = "HTTPS"
-from_port   = 443
-to_port     = 443
-protocol    = "tcp"
-cidr_blocks = ["0.0.0.0/0"]
+  ingress {
+    description = "Public HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
-egress {
-from_port = 0
-to_port = 0
-protocol = "-1"
-cidr_blocks = ["0.0.0.0/0"]
+
+################################
+# 2. JENKINS SERVER SECURITY GROUP
+################################
+resource "aws_security_group" "jenkins_sg" {
+  name        = "jenkins-server-sg"
+  description = "Security group for Jenkins management server"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "SSH for Admin"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # रीयल लाइफ में यहाँ तुम्हारी ऑफिस IP होती है
+  }
+
+  ingress {
+    description = "Jenkins Dashboard"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
-tags = {
-Name = "main-security-group"
+
+################################
+# 3. DEVSECOPS SERVER SECURITY GROUP (सोनार और नेक्सस)
+################################
+resource "aws_security_group" "devsecops_sg" {
+  name        = "devsecops-server-sg"
+  description = "Security group for SonarQube and Nexus"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "SSH Access"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # इंटरव्यू जैकपॉट: सोनारक्वेब सिर्फ जेनकिंस सर्वर से ही कोड एक्सेप्ट करेगा!
+  ingress {
+    description     = "SonarQube Web Traffic from Jenkins only"
+    from_port       = 9000
+    to_port         = 9000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.jenkins_sg.id] 
+  }
+
+  ingress {
+    description     = "Nexus Repository Traffic from Jenkins"
+    from_port       = 8081
+    to_port         = 8081
+    protocol        = "tcp"
+    security_groups = [aws_security_group.jenkins_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
+
+################################
+# 4. MONITORING SERVER SECURITY GROUP (प्रॉमीथियस और ग्राफाना)
+################################
+resource "aws_security_group" "monitoring_sg" {
+  name        = "monitoring-server-sg"
+  description = "Security group for Prometheus and Grafana"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "SSH Access"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Grafana Dashboard"
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Prometheus Web UI"
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
+
 ################################
 IAM ROLE
 ################################
